@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ItemStatus {
+  PENDING
+  APPROVED
+  CLAIMED
+  ARCHIVED
+  REJECTED
+}
+
+enum ClaimStatus {
+  SUBMITTED
+  IN_REVIEW
+  VERIFIED
+  DENIED
+  RESOLVED
+}
+
+enum Category {
+  ELECTRONICS
+  CLOTHING
+  JEWELRY
+  BOOKS
+  ID_WALLET
+  KEYS
+  OTHER
+}
+
+enum Location {
+  CAFETERIA
+  GYM
+  LIBRARY
+  HALLWAY
+  PARKING_LOT
+  CLASSROOM
+  OFFICE
+  OTHER
+}
+
+model Item {
+  id              String     @id @default(cuid())
+  title           String
+  category        Category
+  description     String
+  foundLocation   Location
+  foundAt         DateTime
+  imageUrl        String
+  status          ItemStatus @default(PENDING)
+  reporterName    String?
+  reporterEmail   String
+  reporterPhone   String?
+  adminNotes      String?
+  rejectionReason String?
+  approvedAt      DateTime?
+  approvedBy      String?
+  views           Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  claims          Claim[]
+
+  @@index([status])
+  @@index([category])
+  @@index([foundLocation])
+  @@index([createdAt])
+}
+
+model Claim {
+  id           String      @id @default(cuid())
+  itemId       String?
+  item         Item?       @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  claimType    String
+  name         String
+  email        String
+  proofDetails String?
+  message      String?
+  status       ClaimStatus @default(SUBMITTED)
+  adminNotes   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([status])
+  @@index([itemId])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
